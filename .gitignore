@@ -31,3 +31,5 @@ benchmarks.txt
 
 # golang
 go.work*
+
+vendor/

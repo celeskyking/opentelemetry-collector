@@ -16,6 +16,12 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 )
 
+var confmapProviders []confmap.Provider
+
+func Register(provider confmap.Provider) {
+	confmapProviders = append(confmapProviders, provider)
+}
+
 // ConfigProvider provides the service configuration.
 //
 // The typical usage is the following:
@@ -132,10 +138,14 @@ func (cm *configProvider) GetConfmap(ctx context.Context) (*confmap.Conf, error)
 }
 
 func newDefaultConfigProviderSettings(uris []string) ConfigProviderSettings {
+	var providers = []confmap.Provider{fileprovider.New(), envprovider.New(), yamlprovider.New(), httpprovider.New(), httpsprovider.New()}
+	if len(confmapProviders) > 0 {
+		providers = append(providers, confmapProviders...)
+	}
 	return ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
 			URIs:       uris,
-			Providers:  makeMapProvidersMap(fileprovider.New(), envprovider.New(), yamlprovider.New(), httpprovider.New(), httpsprovider.New()),
+			Providers:  makeMapProvidersMap(providers...),
 			Converters: []confmap.Converter{expandconverter.New()},
 		},
 	}
